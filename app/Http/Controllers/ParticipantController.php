@@ -36,15 +36,13 @@ class ParticipantController extends Controller
         // Handle image upload
         if ($request->hasFile('image')) {
             $image = $request->file('image');
-            $imageName = time() . '.' . $image->extension();
-            $image->move(public_path('uploads'), $imageName);
+            $imagePath = $image->store('uploads', 'public');
         }
 
         // Handle file upload
         if ($request->hasFile('document_file')) {
             $file = $request->file('document_file');
-            $fileName = $file->getClientOriginalName();
-            $file->move(public_path('uploads'), $fileName);
+            $filePath = $file->store('uploads', 'public');
         }
 
         // Create a new participant
@@ -52,9 +50,9 @@ class ParticipantController extends Controller
         $participant->name = $validatedData['name'];
         $participant->dob = $validatedData['dob'];
         $participant->tenth_offering = $validatedData['tenth_offering'];
-        $participant->image = $imageName; // Save the image name
+        $participant->image = $imagePath ?? null; // Save the image path if it exists
         $participant->document_type_id = $validatedData['document_type_id'];
-        $participant->document_file = $fileName; // Save the file name
+        $participant->document_file = $filePath ?? null; // Save the file path if it exists
         $participant->save();
 
         return redirect()->route('first_page')->with('success', 'Participant created successfully.');
@@ -82,35 +80,33 @@ class ParticipantController extends Controller
         // Handle image upload
         if ($request->hasFile('image')) {
             $image = $request->file('image');
-            $imageName = time() . '.' . $image->extension();
-            $image->move(public_path('uploads'), $imageName);
+            $imagePath = $image->store('uploads', 'public');
 
-            // Delete the old image if exists
+            // Delete the old image if it exists
             if ($participant->image) {
-                $oldImagePath = public_path('uploads') . '/' . $participant->image;
+                $oldImagePath = public_path('storage/' . $participant->image);
                 if (file_exists($oldImagePath)) {
                     unlink($oldImagePath);
                 }
             }
 
-            $participant->image = $imageName; // Update the image name
+            $participant->image = $imagePath; // Update the image path
         }
 
         // Handle file upload
         if ($request->hasFile('document_file')) {
             $file = $request->file('document_file');
-            $fileName = $file->getClientOriginalName();
-            $file->move(public_path('uploads'), $fileName);
+            $filePath = $file->store('uploads', 'public');
 
-            // Delete the old file if exists
+            // Delete the old file if it exists
             if ($participant->document_file) {
-                $oldFilePath = public_path('uploads') . '/' . $participant->document_file;
+                $oldFilePath = public_path('storage/' . $participant->document_file);
                 if (file_exists($oldFilePath)) {
                     unlink($oldFilePath);
                 }
             }
 
-            $participant->document_file = $fileName; // Update the file name
+            $participant->document_file = $filePath; // Update the file path
         }
 
         // Update the participant
@@ -125,17 +121,17 @@ class ParticipantController extends Controller
 
     public function destroy(Participant $participant)
     {
-        // Delete the image if exists
+        // Delete the image if it exists
         if ($participant->image) {
-            $imagePath = public_path('uploads') . '/' . $participant->image;
+            $imagePath = public_path('storage/' . $participant->image);
             if (file_exists($imagePath)) {
                 unlink($imagePath);
             }
         }
 
-        // Delete the file if exists
+        // Delete the file if it exists
         if ($participant->document_file) {
-            $filePath = public_path('uploads') . '/' . $participant->document_file;
+            $filePath = public_path('storage/' . $participant->document_file);
             if (file_exists($filePath)) {
                 unlink($filePath);
             }
